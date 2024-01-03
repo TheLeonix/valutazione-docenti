@@ -49,12 +49,12 @@ function ValutazioneDocenti() {
         {docenti.map(docente => (
           <li className="list-group-item">
             <h5>{docente.nome}</h5>
-            <p>{docente.materie[utente.classe]}</p>
+            <p>{docente.materie[utente.classe].join(" - ")}</p>
             {Test(docente.valutato,docente.nome)}
             {console.log(docente.valutato)}
-            
           </li>
         ))}
+        <Link to={"/"}>Ciao</Link>
       </ul>
     </div>
   );
