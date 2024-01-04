@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {Link} from "react-router-dom";
-function ValutazioneDocenti() {
+import {Link, useNavigate } from "react-router-dom";
+function Home() {
   console.clear()
+  const nav=useNavigate()
   const [docenti, setDocenti] = useState([]);
   // Robe Temporanee
-  const utente = {
-    classe: 'Classe4L',
-  };
+  const utente=JSON.parse(localStorage.getItem("userData"))
   // Fine RobeTemporanee
   useEffect(() => {
     fetch('https://raw.githubusercontent.com/1Lg20/ValutazioneDocenti/main/ProfJSON.json')
@@ -18,6 +17,7 @@ function ValutazioneDocenti() {
       .catch(error => console.error('Errore durante il recupero dei dati:', error));
   }, [utente.classe]);
   const setTrue = (docenteId) => {
+    nav(`/Vote/${docenteId}/${utente.classe}`)
     setDocenti((docentiAttuali) => {
       return docentiAttuali.map((docente) => {
         if (docente.nome === docenteId) {
@@ -59,4 +59,4 @@ function ValutazioneDocenti() {
     </div>
   );
 }
-export default ValutazioneDocenti;
+export default Home;

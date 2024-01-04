@@ -18,7 +18,10 @@ const Login = () => {
     const flag=Dati.find(user => user.username === email && user.password === password);
     console.log(flag);
     if(flag)
+    {
+      localStorage.setItem('userData',JSON.stringify(flag));
       nav("home")
+    }
     else
       setError("Credenziali non valide")
   };
@@ -29,9 +32,9 @@ const Login = () => {
       {error && <div className="alert alert-danger">{error}</div>}
       <form>
         <div className="mb-3">
-          <label htmlFor="email" className="form-label">
+          <div className="form-label">
             Email
-          </label>
+          </div>
           <input
             type="email"
             className="form-control"
@@ -41,9 +44,9 @@ const Login = () => {
           />
         </div>
         <div className="mb-3">
-          <label htmlFor="password" className="form-label">
+          <div className="form-label">
             Password
-          </label>
+          </div>
           <input
             type="password"
             className="form-control"
