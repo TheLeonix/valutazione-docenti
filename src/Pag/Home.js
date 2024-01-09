@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {Link, useNavigate } from "react-router-dom";
+import "./SideMenu.css"
 function Home() {
   console.clear()
   const nav=useNavigate()
   const [docenti, setDocenti] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
   // Robe Temporanee
   const utente=JSON.parse(localStorage.getItem("userData"))
   // Fine RobeTemporanee
@@ -42,8 +44,24 @@ function Home() {
       )
     }
   }
+  const toggleMenu = () => {
+    setIsOpen(!isOpen);
+  };
+  const Reset=()=>{
+    localStorage.clear()
+    nav("/")
+  }
   return (
     <div className="container mt-5">
+            <div className={`side-menu ${isOpen ? 'open' : ''}`}>
+        <div className="toggle-btn Due" onClick={toggleMenu}>
+          Menu
+        </div>
+        <ul>
+        <Link to={"/"}>Log-Out</Link>
+        <input type="button" value="Reset" onClick={Reset}/>
+        </ul>
+      </div>
       <h1 className="mb-4">Valutazione Docenti</h1>
       <ul className="list-group">
         {docenti.map(docente => (
@@ -54,7 +72,6 @@ function Home() {
             {console.log(docente.valutato)}
           </li>
         ))}
-        <Link to={"/"}>Ciao</Link>
       </ul>
     </div>
   );
