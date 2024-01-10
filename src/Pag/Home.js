@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {Link, useNavigate } from "react-router-dom";
-import "./SideMenu.css"
 function Home() {
   console.clear()
   const nav=useNavigate()
   const [docenti, setDocenti] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
-  // Robe Temporanee
+  const theme=(localStorage.getItem("Theme")==="true")
+  const [isDarkMode, setIsDarkMode] = useState(!theme);
   const utente=JSON.parse(localStorage.getItem("userData"))
-  // Fine RobeTemporanee
+  console.log(theme)
   useEffect(() => {
     fetch('https://raw.githubusercontent.com/1Lg20/ValutazioneDocenti/main/ProfJSON.json')
       .then(response => response.json())
@@ -19,31 +19,8 @@ function Home() {
       .catch(error => console.error('Errore durante il recupero dei dati:', error));
   }, [utente.classe]);
   const setTrue = (docenteId) => {
-    nav(`/Vote/${docenteId}/${utente.classe}`)
-    setDocenti((docentiAttuali) => {
-      return docentiAttuali.map((docente) => {
-        if (docente.nome === docenteId) {
-          return { ...docente, valutato: true };
-        }
-        return docente;
-      });
-    });
+    nav(`/Vote/${docenteId}/${utente.username}`)
   };
-  const Test=(valutato,nome)=>{
-    console.log("entrato")
-    if(valutato===false)
-    {
-      return (
-        <input type='button' value={"Valuta"} onClick={()=>setTrue(nome)}/>
-      )
-    }
-    else
-    {
-      return(
-          <div>Già Votato</div>
-      )
-    }
-  }
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
@@ -51,28 +28,34 @@ function Home() {
     localStorage.clear()
     nav("/")
   }
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+    localStorage.setItem("Theme",isDarkMode)
+  };
   return (
-    <div className="container mt-5">
-            <div className={`side-menu ${isOpen ? 'open' : ''}`}>
-        <div className="toggle-btn Due" onClick={toggleMenu}>
-          Menu
+    <div className={`${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
+      <div className={`container mt-5 ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
+        <div className={`side-menu ${isOpen ? 'open' : ''} ${isDarkMode ? 'dark-themeS' : 'light-themeS'}`}>
+        <input type="button" value={"Menu"} className="toggle-btn Due" onClick={toggleMenu}/>
+          <div className='BottoneS'>Benvenuto {utente.username}!</div>
+          <Link className='Bottone BottoneS' to={"/"}>Log-Out</Link>
+          <input className='Bottone BottoneS' type="button" value="Reset" onClick={Reset}/>
+          <button className='Bottone BottoneS' onClick={toggleDarkMode}>
+          {isDarkMode ? 'Tema Chiaro' : 'Tema Scuro'}
+          </button>
         </div>
-        <ul>
-        <Link to={"/"}>Log-Out</Link>
-        <input type="button" value="Reset" onClick={Reset}/>
+        <h1 className="mb-4">Valutazione Docenti</h1>
+        <ul className={`list-group`}>
+          {docenti.map(docente => (
+            <li className={`list-group-item DIV ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
+              <h5>{docente.nome}</h5>
+              <p>{docente.materie[utente.classe].join(" - ")}</p>
+              <input type='button' className='Bottone' value={"Valuta"} onClick={()=>setTrue(docente.nome)}/>
+              {console.log(docente.valutato)}
+            </li>
+          ))}
         </ul>
       </div>
-      <h1 className="mb-4">Valutazione Docenti</h1>
-      <ul className="list-group">
-        {docenti.map(docente => (
-          <li className="list-group-item">
-            <h5>{docente.nome}</h5>
-            <p>{docente.materie[utente.classe].join(" - ")}</p>
-            {Test(docente.valutato,docente.nome)}
-            {console.log(docente.valutato)}
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
