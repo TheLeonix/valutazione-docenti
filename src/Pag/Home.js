@@ -3,7 +3,6 @@ import {Link, useNavigate } from "react-router-dom";
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [loggedIn, setLoggedIn] = useState(true);
   const [docenti, setDocenti] = useState([]);
   const [domande, setDomande] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -25,15 +24,16 @@ function App() {
             })
             .then(response => response.json())
             .then(data => {
-              Role=data
+              localStorage.setItem("Role",data.tipo)
+              Role=data.tipo
               console.log(Role)
+              if(Role==="S")
+                getDocenti()
+              else if (Role==="D")
+                console.log("TODO")
+              else if (Role==="A")
+                getDocentiA()
             })
-        if(Role==="S")
-          getDocenti()
-        else if (Role==="D")
-          console.log("TODO")
-        else if (Role==="A")
-          getDocentiA()
           
     };
   
@@ -79,7 +79,6 @@ function App() {
       if (data.successo) {
         // Rimuovi il token dallo storage
         localStorage.removeItem('token');
-        setLoggedIn(false);
         setToken('');
         nav("/")
       } else {
@@ -99,7 +98,7 @@ function App() {
     })
     .then(response => response.json())
     .then(data => {
-      if (data.valuta) {
+      if (data.docenti) {
         console.log(data)
         setDocenti(data.docenti);
       } else {
@@ -109,7 +108,8 @@ function App() {
     .catch(error => console.error('Errore durante il recupero dei docenti:', error));
   };
     const getDocentiA = () => {
-    fetch('http://localhost:3001//get_docenti', {
+      console.log("Ciao")
+    fetch('http://localhost:3001/get_docenti', {
       method: 'POST',
       body: JSON.stringify({ token }),
       headers: {
@@ -118,7 +118,7 @@ function App() {
     })
     .then(response => response.json())
     .then(data => {
-      if (data.valuta) {
+      if (data.docenti) {
         console.log(data)
         setDocenti(data.docenti);
       } else {
@@ -132,11 +132,21 @@ function App() {
     {
       nav(`/Vote/${nome}/${cognome}`)
     }
+  const InitValu=()=>
+    {
+      fetch("http://localhost:3001/start_stop_valutazioni", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({token})
+        //FARE POP UP!
+    })
+    }
 
   return (
     <div className={`${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
-      <h1>Applicazione Studente</h1>
-      {loggedIn ? (
+      <h1>Valutazione Docenti</h1>
         <div className={`container mt-5 ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
           <div className={`side-menu ${isOpen ? 'open' : ''} ${isDarkMode ? 'dark-themeS' : 'light-themeS'}`}>
         <input type="button" value={"Menu"} className="toggle-btn Due" onClick={toggleMenu}/>
@@ -149,12 +159,12 @@ function App() {
           <div>
             {docenti.length > 0 && (
               <div>
-                <h2>Docenti:</h2>
                 <ul className={`list-group`}>
+                <div>{localStorage.getItem("Role") === 'A' && (<input type='button' className='Bottone' value={"Start Valutazioni"} onClick={InitValu}/>)}</div>
                   {docenti.map((docente, index) => (
                     <li className={`list-group-item DIV ${isDarkMode ? 'dark-theme' : 'light-theme'}`} key={index}>
                       <h5>{docente.nome} {docente.cognome}</h5>
-                      <p>{docente.materie.join(" - ")}</p>
+                      <p>{localStorage.getItem("Role") === 'S' && (docente.materie.join(" - "))}{localStorage.getItem("Role") === 'A' && (docente.email)}</p>
                       <input type='button' className='Bottone' value={"Valuta"} onClick={()=>{GoDomande(docente.nome,docente.cognome)}}/>
                     </li>
                   ))}
@@ -173,12 +183,6 @@ function App() {
             )}
           </div>
         </div>
-      ) : (
-        <div>
-          <p>Effettua il login per accedere.</p>
-          <button>Login</button>
-        </div>
-      )}
     </div>
   );
 }

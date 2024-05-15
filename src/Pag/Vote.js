@@ -13,7 +13,14 @@ const Questionnaire = () => {
   const storedToken = localStorage.getItem('token');
   useEffect(() => {
     const fetchData = async () => {
-          getDomande();
+      let Role=localStorage.getItem("Role")
+      console.log(Role)
+      if(Role==="S")
+        getDomande()
+      else if (Role==="D")
+        console.log("TODO")
+      else if (Role==="A")
+        getVoti()
     };
   
     fetchData();
@@ -63,6 +70,21 @@ const Questionnaire = () => {
     })
     .catch(error => console.error('Errore durante il recupero delle domande:', error));
   };
+  const getVoti = () => {
+    fetch('http://localhost:3001/view_docente', {
+      method: 'POST',
+      body: JSON.stringify({professorName,professorSurname,storedToken}),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log(data)
+      setDomande(data)
+    })
+    .catch(error => console.error('Errore durante il logout:', error));
+  }
 
   return (
     <div className={`${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
@@ -77,7 +99,7 @@ const Questionnaire = () => {
           </button>
           </div>
         <h1>Questionario</h1>
-        {questions.map((question, index) => (
+        {localStorage.getItem("Role") === 'S' && (questions.map((question, index) => (
           <div key={index} className="mb-3">
             <p>{question.domanda}</p>
             <div className="btn-group">
@@ -93,7 +115,7 @@ const Questionnaire = () => {
               ))}
             </div>
           </div>
-        ))}
+        )))}
         <button type="button" className="btn btn-success" onClick={handleSubmit}>
           Invia Risposte
         </button>
