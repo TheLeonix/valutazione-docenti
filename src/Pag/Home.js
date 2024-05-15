@@ -10,12 +10,31 @@ function App() {
   const theme=(localStorage.getItem("Theme")==="true")
   const [isDarkMode, setIsDarkMode] = useState(!theme);
   const nav=useNavigate()
+  let Role
 
   useEffect(() => {
     const fetchData = async () => {
       const storedToken = localStorage.getItem('token');
           await is_valid_token(storedToken);
-          getDocenti();
+          fetch("http://localhost:3001/ruolo_utente", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({token})
+            })
+            .then(response => response.json())
+            .then(data => {
+              Role=data
+              console.log(Role)
+            })
+        if(Role==="S")
+          getDocenti()
+        else if (Role==="D")
+          console.log("TODO")
+        else if (Role==="A")
+          getDocentiA()
+          
     };
   
     fetchData();
@@ -72,6 +91,25 @@ function App() {
 
   const getDocenti = () => {
     fetch('http://localhost:3001/get_docenti_classe', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.valuta) {
+        console.log(data)
+        setDocenti(data.docenti);
+      } else {
+        console.error('Errore durante il recupero dei docenti:', data.messaggio);
+      }
+    })
+    .catch(error => console.error('Errore durante il recupero dei docenti:', error));
+  };
+    const getDocentiA = () => {
+    fetch('http://localhost:3001//get_docenti', {
       method: 'POST',
       body: JSON.stringify({ token }),
       headers: {
