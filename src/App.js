@@ -15,7 +15,7 @@ function App() {
             <Routes>
                 <Route path="/Home" element={<Home />} />
                 <Route path="/" element={<Login />} />
-                <Route path="/Vote/:professorId/:userId" element={<Vote />} />
+                <Route path="/Vote/:professorName/:professorSurname" element={<Vote />} />
                 
             </Routes>
         </Router>

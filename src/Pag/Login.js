@@ -1,57 +1,54 @@
-import React, { useState,useEffect } from 'react';
-import {Link,useNavigate} from "react-router-dom"
+import React, { useState } from 'react';
+import { Link, useNavigate } from "react-router-dom";
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [Dati, setDati] = useState({});
-  const [isOpen, setIsOpen] = useState(false);
-  const theme=(localStorage.getItem("Theme")==="true")
-  const [isDarkMode, setIsDarkMode] = useState(!theme);
-  const nav=useNavigate()
-  useEffect(() => {
-    fetch('https://raw.githubusercontent.com/1Lg20/ValutazioneDocenti/main/Credenziali.json')
-      .then(response => response.json())
-      .then(data => {
-        setDati(data)
-      })
-      .catch(error => console.error('Errore durante il recupero dei dati:', error));
-  }, []);
-  const handleLogin = () => {
-    const flag=Dati.find(user => user.username === email && user.password === password);
-    console.log(flag);
-    if(flag)
-    {
-      localStorage.setItem('userData',JSON.stringify(flag));
-      nav("home")
+  const [isDarkMode, setIsDarkMode] = useState(localStorage.getItem("Theme") === "true");
+  const nav = useNavigate();
+
+  const handleLogin = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user: email, password })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        if (data.credenziali_res==true) {
+          localStorage.setItem('token', data.tuo_token);
+          localStorage.setItem('isLoggedIn', 'true');
+          console.log(data)
+          nav("/home");
+        }
+        else
+        {
+          setError(data.messaggio)
+        }
+      } else {
+        setError(data.messaggio);
+      }
+    } catch (error) {
+      console.error('Errore durante il login:', error);
+      setError('Errore durante il login');
     }
-    else
-      setError("Credenziali non valide")
   };
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
-  const Reset=()=>{
-    localStorage.clear()
-    nav("/")
-  }
+
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    localStorage.setItem("Theme",isDarkMode)
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    localStorage.setItem("Theme", newMode.toString());
   };
 
   return (
     <div className={`login ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
       <div className={`container mt-5 ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
-        <div className={`side-menu ${isOpen ? 'open' : ''} ${isDarkMode ? 'dark-themeS' : 'light-themeS'}`}>
-          <input type="button" value={"Menu"} className="toggle-btn Due" onClick={toggleMenu}/>
-
-            <Link className='Bottone BottoneS' to={"/"}>Log-Out</Link>
-            <input className='Bottone BottoneS' type="button" value="Reset" onClick={Reset}/>
-            <button className='Bottone BottoneS' onClick={toggleDarkMode}>
-            {isDarkMode ? 'Tema Chiaro' : 'Tema Scuro'}
-            </button>
-          </div>
         <h2>Login</h2>
         {error && <div className="alert alert-danger">{error}</div>}
         <form>
@@ -83,6 +80,11 @@ const Login = () => {
             Login
           </button>
         </form>
+        <div className="side-menu">
+          <button className='Bottone BottoneS' onClick={toggleDarkMode}>
+            {isDarkMode ? 'Tema Chiaro' : 'Tema Scuro'}
+          </button>
+        </div>
       </div>
     </div>
   );

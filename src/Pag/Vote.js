@@ -3,30 +3,45 @@ import React, { useState, useEffect } from 'react';
 import {Link, useParams,useNavigate } from 'react-router-dom';
 
 const Questionnaire = () => {
-  const { professorId, userId } = useParams();
-  const [questions, setQuestions] = useState([]);
-  const [answers, setAnswers] = useState(
-    JSON.parse(localStorage.getItem(`Ris${professorId}-${userId}`)) || {}
-  );
+  const { professorName, professorSurname } = useParams();
+  const [questions, setDomande] = useState([]);
+  const [answers, setAnswers] = useState([]);
   const nav=useNavigate()
   const [isOpen, setIsOpen] = useState(false);
   const theme=(localStorage.getItem("Theme")==="true")
   const [isDarkMode, setIsDarkMode] = useState(!theme);
-
+  const storedToken = localStorage.getItem('token');
   useEffect(() => {
-    fetch(`https://raw.githubusercontent.com/1Lg20/ValutazioneDocenti/main/domandeProf.json`)
-      .then(response => response.json())
-      .then(data => setQuestions(data))
-      .catch(error => console.error('Errore durante il recupero delle domande:', error));
+    const fetchData = async () => {
+          getDomande();
+    };
+  
+    fetchData();
   }, []);
 
   const handleAnswer = (questionIndex, rating) => {
-    setAnswers(prevAnswers => ({ ...prevAnswers, [questionIndex]: rating }));
+    const obj =
+    {
+      idDomanda:questionIndex,
+      voto:rating
+    }
+    setAnswers(prevAnswers => ({ ...prevAnswers,obj  }));
+    console.log(answers)
   };
 
   const handleSubmit = () => {
-    localStorage.setItem(`Ris${professorId}-${userId}`, JSON.stringify(answers));
-    nav("/Home")
+      fetch('http://localhost:3001/valuta_docente', {
+        method: 'POST',
+        body: JSON.stringify({professorName,professorSurname,storedToken, answers }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        nav("/Home")
+      })
+      .catch(error => console.error('Errore durante il logout:', error));
   };
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -39,13 +54,22 @@ const Questionnaire = () => {
     setIsDarkMode(!isDarkMode);
     localStorage.setItem("Theme",isDarkMode)
   };
+  const getDomande = () => {
+    fetch('http://localhost:3001/get_domande')
+    .then(response => response.json())
+    .then(data => {
+      console.log(data)
+      setDomande(data.domande);
+    })
+    .catch(error => console.error('Errore durante il recupero delle domande:', error));
+  };
 
   return (
     <div className={`${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
       <div className={`container mt-4 ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
           <div className={`side-menu ${isOpen ? 'open' : ''} ${isDarkMode ? 'dark-themeS' : 'light-themeS'}`}>
           <input type="button" value={"Menu"} className="toggle-btn Due" onClick={toggleMenu}/>
-          <div className='BottoneS'>Benvenuto {userId}!</div>
+          <div className='BottoneS'>Benvenuto!</div>
           <Link className='Bottone BottoneS' to={"/"}>Log-Out</Link>
           <input className='Bottone BottoneS' type="button" value="Reset" onClick={Reset}/>
           <button className='Bottone BottoneS' onClick={toggleDarkMode}>
@@ -55,14 +79,14 @@ const Questionnaire = () => {
         <h1>Questionario</h1>
         {questions.map((question, index) => (
           <div key={index} className="mb-3">
-            <p>{question.question}</p>
+            <p>{question.domanda}</p>
             <div className="btn-group">
               {[1, 2, 3, 4, 5].map(rating => (
                 <button
                   key={rating}
                   type="button"
                   className={`btn btn-outline-primary ${answers[index] === rating ? 'active' : ''}`}
-                  onClick={() => handleAnswer(index, rating)}
+                  onClick={() => handleAnswer(question.id, rating)}
                 >
                   {rating}
                 </button>

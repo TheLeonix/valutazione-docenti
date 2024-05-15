@@ -1,62 +1,148 @@
 import React, { useState, useEffect } from 'react';
 import {Link, useNavigate } from "react-router-dom";
-function Home() {
-  console.clear()
-  const nav=useNavigate()
+
+function App() {
+  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [loggedIn, setLoggedIn] = useState(true);
   const [docenti, setDocenti] = useState([]);
+  const [domande, setDomande] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const theme=(localStorage.getItem("Theme")==="true")
   const [isDarkMode, setIsDarkMode] = useState(!theme);
-  const utente=JSON.parse(localStorage.getItem("userData"))
-  console.log(theme)
+  const nav=useNavigate()
+
   useEffect(() => {
-    fetch('https://raw.githubusercontent.com/1Lg20/ValutazioneDocenti/main/ProfJSON.json')
-      .then(response => response.json())
-      .then(data => {
-        const docentiFiltrati = data.filter(docente => docente.materie[utente.classe]);
-        setDocenti(docentiFiltrati);
-      })
-      .catch(error => console.error('Errore durante il recupero dei dati:', error));
-  }, [utente.classe]);
-  const setTrue = (docenteId) => {
-    nav(`/Vote/${docenteId}/${utente.username}`)
-  };
+    const fetchData = async () => {
+      const storedToken = localStorage.getItem('token');
+          await is_valid_token(storedToken);
+          getDocenti();
+    };
+  
+    fetchData();
+  }, []);
+
+  const is_valid_token =(token)=>{
+    return new Promise((resolve, reject) => {
+        fetch("http://localhost:3001/token_valido", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({token})
+        })
+        .then(testo=>testo.json())
+        .then((data)=>{
+            resolve(data)
+        })
+    })
+}
+
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
-  const Reset=()=>{
-    localStorage.clear()
-    nav("/")
-  }
+
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    localStorage.setItem("Theme",isDarkMode)
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    localStorage.setItem("Theme", newMode.toString());
   };
+
+  const logout = () => {
+    fetch('http://localhost:3001/logout', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.successo) {
+        // Rimuovi il token dallo storage
+        localStorage.removeItem('token');
+        setLoggedIn(false);
+        setToken('');
+        nav("/")
+      } else {
+        console.error('Errore durante il logout:', data.messaggio);
+      }
+    })
+    .catch(error => console.error('Errore durante il logout:', error));
+  };
+
+  const getDocenti = () => {
+    fetch('http://localhost:3001/get_docenti_classe', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.valuta) {
+        console.log(data)
+        setDocenti(data.docenti);
+      } else {
+        console.error('Errore durante il recupero dei docenti:', data.messaggio);
+      }
+    })
+    .catch(error => console.error('Errore durante il recupero dei docenti:', error));
+  };
+
+  const GoDomande=(nome,cognome)=>
+    {
+      nav(`/Vote/${nome}/${cognome}`)
+    }
+
   return (
     <div className={`${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
-      <div className={`container mt-5 ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
-        <div className={`side-menu ${isOpen ? 'open' : ''} ${isDarkMode ? 'dark-themeS' : 'light-themeS'}`}>
+      <h1>Applicazione Studente</h1>
+      {loggedIn ? (
+        <div className={`container mt-5 ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
+          <div className={`side-menu ${isOpen ? 'open' : ''} ${isDarkMode ? 'dark-themeS' : 'light-themeS'}`}>
         <input type="button" value={"Menu"} className="toggle-btn Due" onClick={toggleMenu}/>
-          <div className='BottoneS'>Benvenuto {utente.username}!</div>
-          <Link className='Bottone BottoneS' to={"/"}>Log-Out</Link>
-          <input className='Bottone BottoneS' type="button" value="Reset" onClick={Reset}/>
+          <div className='BottoneS'>Benvenuto {}!</div>
+          <input className='Bottone BottoneS' type="button" value="LogOut" onClick={logout}/>
           <button className='Bottone BottoneS' onClick={toggleDarkMode}>
           {isDarkMode ? 'Tema Chiaro' : 'Tema Scuro'}
           </button>
         </div>
-        <h1 className="mb-4">Valutazione Docenti</h1>
-        <ul className={`list-group`}>
-          {docenti.map(docente => (
-            <li className={`list-group-item DIV ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
-              <h5>{docente.nome}</h5>
-              <p>{docente.materie[utente.classe].join(" - ")}</p>
-              <input type='button' className='Bottone' value={"Valuta"} onClick={()=>setTrue(docente.nome)}/>
-              {console.log(docente.valutato)}
-            </li>
-          ))}
-        </ul>
-      </div>
+          <div>
+            {docenti.length > 0 && (
+              <div>
+                <h2>Docenti:</h2>
+                <ul className={`list-group`}>
+                  {docenti.map((docente, index) => (
+                    <li className={`list-group-item DIV ${isDarkMode ? 'dark-theme' : 'light-theme'}`} key={index}>
+                      <h5>{docente.nome} {docente.cognome}</h5>
+                      <p>{docente.materie.join(" - ")}</p>
+                      <input type='button' className='Bottone' value={"Valuta"} onClick={()=>{GoDomande(docente.nome,docente.cognome)}}/>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {domande.length > 0 && (
+              <div>
+                <h2>Domande:</h2>
+                <ul>
+                  {domande.map((domanda, index) => (
+                    <li key={index}>{domanda.domanda}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div>
+          <p>Effettua il login per accedere.</p>
+          <button>Login</button>
+        </div>
+      )}
     </div>
   );
 }
-export default Home;
+
+export default App;
