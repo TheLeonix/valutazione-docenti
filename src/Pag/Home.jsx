@@ -4,8 +4,9 @@ import {Link, useNavigate } from "react-router-dom";
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [docenti, setDocenti] = useState([]);
-  const [domande, setDomande] = useState([]);
+  const [consolle, setConsolle] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [error, setError] = useState('');
   const theme=(localStorage.getItem("Theme")==="true")
   const [isDarkMode, setIsDarkMode] = useState(!theme);
   const nav=useNavigate()
@@ -32,6 +33,7 @@ function App() {
               else if (Role==="D")
                 console.log("TODO")
               else if (Role==="A")
+                //getConsolle()
                 getDocentiA()
             })
           
@@ -39,6 +41,50 @@ function App() {
   
     fetchData();
   }, []);
+  const setDocentiA=()=>
+    {
+      fetch('http://localhost:3001/carica_docenti', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      setError(data.messaggio)
+    })
+    }
+  const setStudenti=()=>
+    {
+      fetch('http://localhost:3001/carica_studenti', {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        setError(data.messaggio)
+      })
+    }
+
+  const getConsolle=()=>
+    {
+      fetch("http://localhost:3001/admin_console", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({token})
+    })
+    .then(testo=>testo.json())
+    .then((data)=>{
+        console.log(data)
+        setConsolle(data)
+    })
+    }
 
   const is_valid_token =(token)=>{
     return new Promise((resolve, reject) => {
@@ -140,13 +186,17 @@ function App() {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({token})
-        //FARE POP UP!
+        })
+        .then(response => response.json())
+        .then(data => {
+          setError(data.messaggio)
     })
     }
 
   return (
     <div className={`${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
       <h1>Valutazione Docenti</h1>
+      {error && <div className="alert alert-success">{error}</div>}
         <div className={`container mt-5 ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
           <div className={`side-menu ${isOpen ? 'open' : ''} ${isDarkMode ? 'dark-themeS' : 'light-themeS'}`}>
         <input type="button" value={"Menu"} className="toggle-btn Due" onClick={toggleMenu}/>
@@ -158,25 +208,17 @@ function App() {
         </div>
           <div>
             {docenti.length > 0 && (
-              <div>
+              <div className='row'>
+                <div className='col-3'>{localStorage.getItem("Role") === 'A' && (<input type='button' className='btn btn-success' value={"Start/Stop Valutazioni"} onClick={InitValu}/>)}</div>
+                <div className='col-2 mx-3'>{localStorage.getItem("Role") === 'A' && (<input type='button' className='btn btn-success' value={"Carica Docenti"} onClick={setDocentiA} />)}</div>
+                <div className='col-2 mx-3'>{localStorage.getItem("Role") === 'A' && (<input type='button' className='btn btn-success' value={"Carica Studenti"} onClick={setStudenti}/>)}</div>
                 <ul className={`list-group`}>
-                <div>{localStorage.getItem("Role") === 'A' && (<input type='button' className='Bottone' value={"Start Valutazioni"} onClick={InitValu}/>)}</div>
                   {docenti.map((docente, index) => (
                     <li className={`list-group-item DIV ${isDarkMode ? 'dark-theme' : 'light-theme'}`} key={index}>
                       <h5>{docente.nome} {docente.cognome}</h5>
                       <p>{localStorage.getItem("Role") === 'S' && (docente.materie.join(" - "))}{localStorage.getItem("Role") === 'A' && (docente.email)}</p>
-                      <input type='button' className='Bottone' value={"Valuta"} onClick={()=>{GoDomande(docente.nome,docente.cognome)}}/>
+                      <div>{localStorage.getItem("Role") === 'S' && ( <input type='button' className='Bottone' value={"Valuta"} onClick={()=>{GoDomande(docente.nome,docente.cognome)}}/>)}{localStorage.getItem("Role") === 'A' && ( <input type='button' className='Bottone' value={"Vedi"} onClick={()=>{GoDomande(docente.nome,docente.cognome)}}/>)}</div>
                     </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {domande.length > 0 && (
-              <div>
-                <h2>Domande:</h2>
-                <ul>
-                  {domande.map((domanda, index) => (
-                    <li key={index}>{domanda.domanda}</li>
                   ))}
                 </ul>
               </div>

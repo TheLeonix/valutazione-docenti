@@ -8,6 +8,7 @@ const Questionnaire = () => {
   const [answers, setAnswers] = useState([]);
   const nav=useNavigate()
   const [isOpen, setIsOpen] = useState(false);
+  const [error, setError] = useState('');
   const theme=(localStorage.getItem("Theme")==="true")
   const [isDarkMode, setIsDarkMode] = useState(!theme);
   const storedToken = localStorage.getItem('token');
@@ -82,6 +83,7 @@ const Questionnaire = () => {
     .then(data => {
       console.log(data)
       setDomande(data)
+      setError(data.messaggio)
     })
     .catch(error => console.error('Errore durante il logout:', error));
   }
@@ -99,6 +101,7 @@ const Questionnaire = () => {
           </button>
           </div>
         <h1>Questionario</h1>
+        {error && <div className="alert alert-danger">{error}</div>}
         {localStorage.getItem("Role") === 'S' && (questions.map((question, index) => (
           <div key={index} className="mb-3">
             <p>{question.domanda}</p>
@@ -116,9 +119,7 @@ const Questionnaire = () => {
             </div>
           </div>
         )))}
-        <button type="button" className="btn btn-success" onClick={handleSubmit}>
-          Invia Risposte
-        </button>
+        <div>{localStorage.getItem("Role") === 'S' && ( <input type='button' className='btn btn-success' value={"Invia Risposte"} onClick={handleSubmit}/>)}{localStorage.getItem("Role") === 'A' && ( <input type='button' className='btn btn-success' value={"Ritorna"} onClick={handleSubmit}/>)}</div>
       </div>
     </div>
   );
